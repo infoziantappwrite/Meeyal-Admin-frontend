@@ -8,12 +8,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "#00DDFF",
-        secondary: "#FF00D4",
+        primary: "#dc4298",
+        secondary: "#d8e029",
+        darkc:"#241f20",
+        hover_primary:"rgb(215, 12, 127)"
       },
       backgroundImage: {
-        "gradient-primary": "linear-gradient(to right, #00DDFF, #FF00D4)",
-        "hover-gradient-primary": "linear-gradient(to left, #00DDFF, #FF00D4)",
+        "gradient-primary": "linear-gradient(to right,rgb(215, 12, 127), #d8e029)",
+        "hover-gradient-primary": "linear-gradient(to left, #dc4298, #d8e029)",
       },
     },
   },

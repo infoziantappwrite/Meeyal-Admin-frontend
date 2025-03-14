@@ -1,64 +1,76 @@
-/* eslint-disable no-unused-vars */
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCookies } from "react-cookie";
-
+import { account } from "../lib/appwrite"; // Import Appwrite instance
+import { useUser } from "../lib/UserContext"; // Import user context
+import Loader from "./Loader";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [cookies, setCookie] = useCookies(["authToken"]);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { user, loading, refreshUser } = useUser(); // Get user context
 
-  // Auto-login if token is found
-  useEffect(() => {
-    const token = cookies.authToken;
-    if (token) {
-      navigate("/dashboard");
-    }
-  }, [cookies, navigate]);
+  // Show loader while checking session
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <Loader></Loader>
+      </div>
+    );
+  }
+
+  // If user is already logged in, redirect to dashboard
+  if (user) {
+    navigate("/dashboard");
+    return null;
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post("http://localhost:8000/api/v1/user/login", { 
-        email, 
-        password 
-      });
-
-      if (response.data.token) {
-        setCookie("authToken", response.data.token, { path: "/", secure: true, httpOnly: false });
-        navigate("/dashboard"); // Redirect to dashboard
-      }
+        // Authenticate user
+        await account.createEmailPasswordSession(email, password);
+        
+        // Fetch user details
+        const user = await account.get(); 
+        //console.log(user);
+        // Check if the user has the correct role
+        if (user?.labels?.includes("admin")) { // Change "admin" to the required role
+            await refreshUser(); // Refresh user session after login
+            navigate("/dashboard");
+        } else {
+            setError("Access denied. You do not have permission to log in.");
+            await account.deleteSession("current"); // Logout immediately
+        }
     } catch (err) {
-      setError(err.response?.data?.error || "Login failed. Please try again.");
+        setError(err.message || "Login failed. Please try again.");
     }
-  };
+};
+
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 rounded-lg px-6 py-8 ring-1 ring-gray-900/5 shadow-xl w-96">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="bg-white rounded-lg px-6 py-8 shadow-md w-96 border border-gray-200">
         {/* Logo */}
         <div className="flex justify-center mb-6">
-          <img src="/logo.png" alt="Logo" className="h-12" />
+          <img src="/logo.png" alt="Logo" className="h-24" />
         </div>
-        
+
         {/* Title */}
-        <h2 className="text-gray-900 dark:text-white text-xl font-semibold text-center">Login</h2>
+        <h2 className="text-gray-900 text-xl font-semibold text-center">Admin Login</h2>
 
         {/* Error Message */}
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+        {error && <p className="text-red-500 text-sm mt-2 text-center">{error}</p>}
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="mt-4">
           <input
             type="text"
-            placeholder="User ID"
+            placeholder="email Id"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-gradient-primary"
             required
           />
 
@@ -67,17 +79,14 @@ const Login = () => {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full mt-3 px-4 py-2 border rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none"
+            className="w-full mt-3 px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-gradient-primary"
             required
           />
 
-          {/* Submit Button with Gradient */}
+          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-2 mt-4 rounded-lg text-white font-semibold"
-            style={{
-              backgroundImage: "linear-gradient(to right, rgb(0, 221, 255), rgb(255, 0, 212))",
-            }}
+            className="w-full py-2 mt-4 bg-gradient-primary hover:bg-hover-gradient-primary text-white rounded-lg font-semibold"
           >
             Login
           </button>

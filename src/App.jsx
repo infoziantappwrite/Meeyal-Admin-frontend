@@ -1,56 +1,54 @@
-import React ,{useState}from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Header from './pages/Header';
-import Login from './pages/Login';
-import { useCookies } from "react-cookie";
-import Product from './pages/products/Product';
-import Sidebar from './pages/Sidebar';
-import Customer from './pages/customer/Customer';
-import Supplier from './pages/supplier/Supplier';
-import Billing from './pages/Billing';
-import Dashboard from './pages/Dashboard';
-import Report from './pages/Report';
-import ChatBot from './pages/ChatBot';
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Header from "./pages/Header";
+import Login from "./pages/Login";
+import Sidebar from "./pages/Sidebar";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import { useUser } from "./lib/UserContext"; // Import user context
+import Loader from "./pages/Loader";
+import AddProduct from "./pages/products/Addproduct";
+import Product from "./pages/products/Product";
 
 const App = () => {
-  const [cookies] = useCookies(["authToken"]);
-  const isAuthenticated = cookies.authToken; // Get authentication status
+  const { user, loading } = useUser(); // Get user context
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  
 
   const handleSearch = (query) => {
-      setSearchQuery(query);
-      console.log("Searching for:", query);
-      // Perform search logic here
+    setSearchQuery(query);
+    //console.log("Searching for:", query);
+    // Perform search logic here
   };
- 
+  const isAdmin = user?.labels?.includes("admin");
+   //console.log(user)
 
-  //console.log(isAuthenticated);
+  if (loading) {
+    return (
+      <Loader></Loader>
+    );
+  }
+
   return (
     <>
-      {isAuthenticated ? (
-        <div className="flex bg-gray-800 text-white">
-        {/* Sidebar */}
-        <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <ChatBot></ChatBot>
-        {/* Main Content */}
-        <div className="flex-1">
-          <Header isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} onSearch={handleSearch} />
-          <Routes>
-            <Route path="/products" element={<Product searchQuery={searchQuery}></Product>} />
-            <Route path="/customers" element={<Customer searchQuery={searchQuery}></Customer>} />
-            <Route path="/suppliers" element={<Supplier searchQuery={searchQuery}></Supplier>} />
-            <Route path='/billing' element={<Billing />} />
-            <Route path='/dashboard' element={<Dashboard />} />
-            <Route path='/reports' element={<Report />} />
-          </Routes>
+      {user && isAdmin ? (
+        <div className="flex bg-gray-100 text-gray-800">
+          {/* Sidebar */}
+          <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+
+          {/* Main Content */}
+          <div className="flex-1">
+            <Header isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} onSearch={handleSearch} />
+            <Routes>
+              <Route path="/dashboard" element={<Dashboard searchQuery={searchQuery}/>} />
+              <Route path="/add-product" element={<AddProduct/>} />
+              <Route path="/products" element={<Product searchQuery={searchQuery}/>} />              
+            </Routes>
+          </div>
         </div>
-      </div>
       ) : (
         <Routes>
           <Route path="/" element={<Login />} />
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="/*" element={<Navigate to="/" />} />
         </Routes>
       )}
     </>

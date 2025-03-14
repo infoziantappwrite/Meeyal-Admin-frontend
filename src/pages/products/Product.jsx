@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import AddProduct from "./Addproduct";
-import ViewProduct from "./ViewProduct";
+import { useNavigate } from "react-router-dom";
+import { databases, Query } from "../../lib/appwrite";
+import noimage from "../../../public/image.png";
+import ProductDetails from "./ProductDetails";
 import EditProduct from "./EditProduct";
 import {
   Plus,
@@ -15,266 +16,153 @@ import {
   ChevronsRight,
 } from "lucide-react";
 
+
 const Product = ({ searchQuery }) => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [deleteType, setDeleteType] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [totalProducts, setTotalProducts] = useState(0);
-  const [showAddProductModal, setShowAddProductModal] = useState(false);
-  const [showViewProductModal, setviewProductModal] = useState(false);
-  const [showEditProductModal, setEditProductModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showViewProduct, setshowViewProduct] = useState(false);
+  const [showEditProduct, setshowEditProduct] = useState(false);
+  const itemsPerPage = 7;
 
-  const itemsPerPage = 10;
-
-  const openAddProductModal = () => setShowAddProductModal(true);
-  const closeAddProductModal = () => setShowAddProductModal(false);
-
-
-  const [availableCategories, setAvailableCategories] = useState([]);
-  const [availableUnits, setAvailableUnits] = useState([]);
-  const [filters, setFilters] = useState({ category: "", unit: "" });
-
-  const handleCategoryChange = (value) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      category: value, // Only one category at a time
-    }));
-  };
-
-  const handleUnitChange = (value) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      unit: value, // Only one category at a time
-    }));
-  };
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get("http://localhost:8000/api/v1/products/all", {
-        withCredentials: true,
-      });
-      let data = res.data;
+      const response = await databases.listDocuments(
+        import.meta.env.VITE_APPWRITE_DATABASE_ID,
+        import.meta.env.VITE_APPWRITE_PRODUCT_COLLECTION_ID,
+        [Query.limit(1000)] // Fetch all items (adjust limit as needed)
+      );
 
-      const categories = [...new Set(data.map((p) => p.category))];
-      const units = [...new Set(data.map((p) => p.unit))];
+      let filteredProducts = response.documents;
 
-      setAvailableCategories(categories);
-      setAvailableUnits(units);
-
-      // Apply filters
-      if (filters.category) {
-        data = data.filter((p) => p.category === filters.category);
-      }
-      if (filters.unit.length > 0) {
-        data = data.filter((p) => filters.unit.includes(p.unit));
-      }
       if (searchQuery) {
-        data = data.filter((p) =>
-          p.productname.toLowerCase().includes(searchQuery.toLowerCase())
+        filteredProducts = filteredProducts.filter((prod) =>
+          prod.productname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          prod.categories?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          prod.subcategories?.name?.toLowerCase().includes(searchQuery.toLowerCase())
         );
       }
 
-      setTotalProducts(data.length);
-      setTotalPages(Math.ceil(data.length / itemsPerPage));
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      setProducts(data.slice(startIndex, startIndex + itemsPerPage));
+      setProducts(filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
+      setTotalPages(Math.ceil(filteredProducts.length / itemsPerPage));
     } catch (err) {
       console.error("Error fetching products:", err);
     }
   };
+  const handleSelect = (id) => {
+    setSelectedProducts((prev) =>
+      prev.includes(id) ? prev.filter((prodId) => prodId !== id) : [...prev, id]
+    );
+  };
 
-  useEffect(() => {
-    fetchProducts();
-  }, [currentPage, filters, searchQuery]);
-
-
-
-  const confirmDelete = (type, target) => {
-    setDeleteType(type);
-    setDeleteTarget(target);
-    setShowConfirmModal(true);
+  // Handle delete confirmation
+  const handleDeleteConfirm = () => {
+    if (selectedProducts.length > 0) {
+      setShowDeleteConfirm(true);
+    }
   };
 
   const handleDelete = async () => {
     try {
-      if (deleteType === "single") {
-        await axios.delete(
-          `http://localhost:8000/api/v1/products/delete/${deleteTarget}`,
-          { withCredentials: true }
+      for (const productId of selectedProducts) {
+        await databases.deleteDocument(
+          import.meta.env.VITE_APPWRITE_DATABASE_ID,
+          import.meta.env.VITE_APPWRITE_PRODUCT_COLLECTION_ID,
+          productId
         );
-        setProducts(products.filter((prod) => prod._id !== deleteTarget));
-      } else if (deleteType === "multiple") {
-        await axios.post(
-          "http://localhost:8000/api/v1/products/delete-many",
-          { ids: selectedProducts },
-          { withCredentials: true }
-        );
-        setProducts(products.filter((prod) => !selectedProducts.includes(prod._id)));
-        setSelectedProducts([]);
       }
-      setShowConfirmModal(false);
+      setShowDeleteConfirm(false);
+      setSelectedProducts([]); // Clear selection
+      fetchProducts(); // Refresh product list
     } catch (err) {
-      console.error("Error deleting product(s):", err);
+      console.error("Error deleting products:", err);
     }
   };
 
-  const handleSelect = (productId) => {
-    setSelectedProducts((prevSelected) =>
-      prevSelected.includes(productId)
-        ? prevSelected.filter((id) => id !== productId)
-        : [...prevSelected, productId]
-    );
-  };
 
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedProducts(products.map((prod) => prod._id));
-    } else {
-      setSelectedProducts([]);
-    }
-  };
-  const handleProductAdded = () => {
-    fetchProducts(); // Refresh product list
-    closeAddProductModal(); // Close modal after adding product
-  };
-
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage, searchQuery, showViewProduct, showEditProduct, products]);
 
   return (
-    <div className="p-4 text-white">
-      <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-700">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-300">
+        <h1 className="text-xl font-bold flex items-center gap-2">
           <PackageSearch /> Product Management
         </h1>
         <div className="flex gap-4">
-
-
-        </div>
-        <div className="flex gap-4">
-          <button className="bg-gray-700 px-4 py-2 rounded-md border border-gray-500 ">
-            Total Products: {totalProducts}
-          </button>
-
-          <button
-            onClick={openAddProductModal}
-            className="flex items-center gap-2 bg-gradient-primary hover:bg-hover-gradient-primary px-4 py-2 rounded-md"
-          >
-            <Plus /> Add Product
-          </button>
-          <button
-            className={`px-4 py-2 rounded-md transition flex items-center gap-2 ${selectedProducts.length > 0
-              ? "bg-red-600 hover:bg-red-700 cursor-pointer"
-              : "bg-gray-600 cursor-not-allowed opacity-50"
-              }`}
-            onClick={() => confirmDelete("multiple", null)}
-            disabled={selectedProducts.length === 0}
-          >
-            <Trash2 /> Delete Selected
+          {selectedProducts.length > 0 && (
+            <button onClick={handleDeleteConfirm} className="bg-red-500 hover:bg-red-700 px-4 py-2 rounded-md text-white flex items-center gap-2">
+              <Trash2 />Delete Selected
+            </button>
+          )}
+          <button onClick={() => navigate("/add-product")} className="bg-primary hover:bg-hover_primary px-4 py-2 rounded-md text-white flex items-center gap-2">
+            <Plus /> Add New Product
           </button>
         </div>
       </div>
-      <div className="flex gap-4 mb-4">
-        {/* Category Filter */}
-        <select
-          name="category"
-          value={filters.category}
-          onChange={(e) => handleCategoryChange(e.target.value)}
-          className="bg-gray-900 px-4 py-2 rounded-md border border-gray-700"
-        >
-          <option value="">All Categories</option>
-          {availableCategories.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
 
-        {/* Unit Filter (Allows Multiple Selections) */}
-        <div className="relative">
-          <select
-            name="unit"
-            onChange={(e) => handleUnitChange(e.target.value)}
-            className="bg-gray-900 px-4 py-2 rounded-md border border-gray-700"
-          >
-            <option value="">All Units</option>
-            {availableUnits.map((unit) => (
-              <option key={unit} value={unit}>
-                {unit}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-
-
-      {/* Product Table */}
-      <div className="overflow-x-auto text-center">
-        <table className="min-w-full bg-gray-700 rounded-md border border-gray-900 border-collapse overflow-hidden">
-          <thead className="bg-gray-900 text-white rounded-t-md">
-            <tr className="rounded-md">
-              <th className="px-4 py-3 border-t border-gray-800">
+      <div className="overflow-x-auto text-center rounded-lg shadow-md  border border-gray-300">
+        <table className="min-w-full bg-white  shadow-lg rounded-lg overflow-hidden">
+          <thead className="bg-gray-200 text-gray-700 rounded-t-lg">
+            <tr className=" px-4 py-4 ">
+              <th className="px-4 py-3">
                 <input
                   type="checkbox"
-                  className="h-5 w-5"
-                  onChange={handleSelectAll}
+                  onChange={(e) =>
+                    setSelectedProducts(e.target.checked ? products.map((p) => p.$id) : [])
+                  }
+                  className="w-5 h-5 rounded-md accent-primary cursor-pointer"
                   checked={selectedProducts.length === products.length && products.length > 0}
                 />
               </th>
-              <th className="px-4 py-2 border-t border-gray-800">Name</th>
-              <th className="px-4 py-2 border-t border-gray-800">Price</th>
-              <th className="px-4 py-2 border-t border-gray-800">Category</th>
-              <th className="px-4 py-2 border-t border-gray-800">Brand</th>
-              <th className="px-4 py-2 border-t border-gray-800">stock</th>
-              <th className="px-4 py-2 border-t border-gray-800">Unit</th>
-              <th className="px-4 py-2 border-t border-gray-800">Actions</th>
+              <th className="px-4 py-4  first:rounded-tl-lg last:rounded-tr-lg">Image</th>
+              <th className="px-4 py-3 ">Name</th>
+              <th className="px-4 py-3 ">Price</th>
+              <th className="px-4 py-3 ">Category</th>
+              <th className="px-4 py-3 ">Subcategory</th>
+              <th className="px-4 py-3 ">Stock</th>
+              <th className="px-4 py-3  last:rounded-tr-lg">Actions</th>
             </tr>
           </thead>
           <tbody>
             {products.length > 0 ? (
               products.map((prod) => (
-                <tr key={prod._id} className="hover:bg-gray-800 rounded-md">
-                  <td className="px-4 py-2 border-t border-gray-800">
+                <tr key={prod.$id} className="hover:bg-gray-50 border-b last:rounded-b-lg">
+                  <td className="px-4 py-3">
                     <input
                       type="checkbox"
-                      className="h-5 w-5"
-                      checked={selectedProducts.includes(prod._id)}
-                      onChange={() => handleSelect(prod._id)}
+                      checked={selectedProducts.includes(prod.$id)}
+                      onChange={() => handleSelect(prod.$id)}
+                      className="w-5 h-5 rounded-md accent-primary cursor-pointer"
                     />
                   </td>
-                  <td className="px-4 py-3 border-t border-gray-800">{prod.productname}</td>
-                  <td className="px-4 py-3 border-t border-gray-800">{prod.price}</td>
-                  <td className="px-4 py-3 border-t border-gray-800">{prod.category}</td>
-                  <td className="px-4 py-3 border-t border-gray-800">{prod.brand || "N/A"}</td>
-                  <td className="px-4 py-3 border-t border-gray-800">{prod.stock}</td>
-                  <td className="px-4 py-3 border-t border-gray-800">{prod.unit || "N/A"}</td>
-                  <td className="px-4 py-3 border-t border-gray-800 flex gap-3 justify-center">
-                    <button
-                      className="text-blue-500 hover:text-blue-600"
-                      onClick={() => {
-                        setSelectedProduct(prod);
-                        setEditProductModal(true);
-                      }}
-                    >
+                  <td className="px-4 py-3 flex justify-center ">
+                    {prod.productimages?.length > 0 ? (
+                      <img src={prod.productimages[0]} alt="Product" className="w-8 h-8 object-cover rounded" />
+                    ) : (
+                      <img src={noimage} alt="Product" className="w-8 h-8 object-cover rounded" />
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {prod.productname.length > 15 ? prod.productname.substring(0, 15) + "..." : prod.productname}
+                  </td>
+
+                  <td className="px-4 py-3 ">₹ {prod.originalprice}</td>
+                  <td className="px-4 py-3 ">{prod.categories?.name || "NA"}</td>
+                  <td className="px-4 py-3 ">{prod.subcategories?.name || "NA"}</td>
+                  <td className="px-4 py-3 ">{prod.stock}</td>
+                  <td className="px-4 py-3 flex gap-3 justify-center ">
+                    <button className="text-blue-500 hover:text-blue-600" onClick={() => { setSelectedProduct(prod), setshowEditProduct(true) }}>
                       <Edit />
                     </button>
-                    <button
-                      className="text-red-500 hover:text-red-600 "
-                      onClick={() => confirmDelete("single", prod._id)}
-                    >
-                      <Trash2 />
-                    </button>
-                    <button
-                      className="text-green-500 hover:text-green-600"
-                      onClick={() => {
-                        setSelectedProduct(prod);
-                        setviewProductModal(true);
-                      }}
-                    >
+
+                    <button className="text-green-500 hover:text-green-600" onClick={() => { setSelectedProduct(prod), setshowViewProduct(true) }}>
                       <Eye />
                     </button>
                   </td>
@@ -282,93 +170,53 @@ const Product = ({ searchQuery }) => {
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="p-4">
-                  No products found
-                </td>
+                <td colSpan="7" className="p-4 text-gray-500 rounded-b-lg">No products found</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+
       {/* Pagination */}
       <div className="flex justify-center items-center mt-4 gap-4">
-        {/* First Page Button */}
-        <button
-          onClick={() => setCurrentPage(1)}
-          className="bg-gray-900 px-4 py-2 rounded-md disabled:opacity-50 flex items-center gap-1 border border-gray-700"
-          disabled={currentPage === 1}
-        >
-          <ChevronsLeft size={18} /> First
+        <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="px-4 py-2 bg-gray-200 rounded-md">
+          <ChevronsLeft />
         </button>
-
-        {/* Previous Page Button */}
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          className="bg-gray-900 px-4 py-2 rounded-md disabled:opacity-50 flex items-center gap-1 border border-gray-700"
-          disabled={currentPage === 1}
-        >
-          <ChevronLeft size={18} /> Prev
+        <button onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="px-4 py-2 bg-gray-200 rounded-md">
+          <ChevronLeft />
         </button>
-
-        {/* Current Page Info */}
         <span>Page {currentPage} of {totalPages}</span>
-
-        {/* Next Page Button */}
-        <button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-          className="bg-gray-900 px-4 py-2 rounded-md disabled:opacity-50 flex items-center gap-1 border border-gray-700"
-          disabled={currentPage === totalPages}
-        >
-          Next <ChevronRight size={18} />
+        <button onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="px-4 py-2 bg-gray-200 rounded-md">
+          <ChevronRight />
         </button>
-
-        {/* Last Page Button */}
-        <button
-          onClick={() => setCurrentPage(totalPages)}
-          className="bg-gray-900 px-4 py-2 rounded-md disabled:opacity-50 flex items-center gap-1 border border-gray-700"
-          disabled={currentPage === totalPages}
-        >
-          Last <ChevronsRight size={18} />
+        <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="px-4 py-2 bg-gray-200 rounded-md">
+          <ChevronsRight />
         </button>
       </div>
-
-      {/* Confirmation Modal */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-gray-800 p-6 rounded-lg text-center">
-            <p className="text-xl mb-4">
-              Are you sure you want to delete{" "}
-              {deleteType === "multiple" ? "these products" : "this product"}?
-            </p>
-            <div className="flex gap-4 justify-center">
-              <button onClick={handleDelete} className="bg-red-600 px-4 py-2 rounded-md">
-                Yes, Delete
-              </button>
-              <button onClick={() => setShowConfirmModal(false)} className="bg-gray-600 px-4 py-2 rounded-md">
-                Cancel
-              </button>
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-md z-50">
+          <div className="bg-white p-6 rounded-md shadow-lg">
+            <p className="text-lg">Are you sure you want to delete?</p>
+            <div className="flex gap-4 mt-4 justify-center ">
+              <button className="bg-red-500 text-white px-4 py-2 rounded-md" onClick={handleDelete}>Yes</button>
+              <button className="bg-gray-300 px-4 py-2 rounded-md" onClick={() => setShowDeleteConfirm(false)}>No</button>
             </div>
           </div>
         </div>
       )}
+      {selectedProduct && showViewProduct ? (
+        <ProductDetails product={selectedProduct} onClose={() => setshowViewProduct(false)} />
+      ) : null}
+      {selectedProduct && showEditProduct ? (
+        <EditProduct product={selectedProduct} onClose={() => setshowEditProduct(false)} />
+      ) : null}
 
-      {showAddProductModal && (
 
-        <AddProduct onClose={closeAddProductModal} onAdd={handleProductAdded} />
-
-      )}
-      {showViewProductModal && selectedProduct && (
-        <ViewProduct product={selectedProduct} onClose={() => setviewProductModal(false)} />
-      )}
-      {showEditProductModal && selectedProduct && (
-        <EditProduct
-          product={selectedProduct}
-          onClose={() => setEditProductModal(false)}
-
-        />
-      )}
 
     </div>
+
   );
 };
 

@@ -7,14 +7,17 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import './index.css';
 import App from './App.jsx';
 import Login from './pages/Login.jsx';
+import { UserProvider } from './lib/UserContext';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
+     <UserProvider>
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/*" element={<App />} />
       </Routes>
     </Router>
+    </UserProvider>
   </StrictMode>
 );
