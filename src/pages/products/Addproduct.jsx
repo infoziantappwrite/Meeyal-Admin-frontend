@@ -127,7 +127,7 @@ const AddProduct = () => {
 
           <button
             onClick={() => setIsPopupOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-lg hover:bg-blue-600 transition"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
           >
             <List size={20} /> Manage Categories
           </button>
@@ -149,7 +149,7 @@ const AddProduct = () => {
               type="text"
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
-              className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="w-full p-2 border rounded text-gray-800  focus:ring-gray-400 focus:outline-none focus:ring-2 "
               required
             />
           </div>
