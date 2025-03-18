@@ -12,9 +12,9 @@ const AddProduct = () => {
   const navigate = useNavigate();
   const [productName, setProductName] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
-  const [discountPrice, setDiscountPrice] = useState("");
   const [details, setDetails] = useState("");
   const [stock, setStock] = useState("");
+  const [status, setStatus] = useState("");
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [categories, setCategories] = useState([]);
@@ -68,12 +68,12 @@ const AddProduct = () => {
       const productData = {
         productname: productName,
         originalprice: parseFloat(originalPrice),
-        discountprice: parseFloat(discountPrice),
         details,
         stock: parseInt(stock, 10),
         categories: category,
         subcategories: subcategory,
-        productimages: images, // Array of URLs
+        productimages: images.map(img => img.id), // Array of URLs
+        status: status,
       };
       //console.log(productData)
 
@@ -93,11 +93,12 @@ const AddProduct = () => {
       // Reset form fields after successful submission
       setProductName("");
       setOriginalPrice("");
-      setDiscountPrice("");
+
       setDetails("");
       setStock("");
       setCategory("");
       setSubcategory("");
+      setStatus("");
       setImages([]);
       setClearImages(true);
       setTimeout(() => {
@@ -201,6 +202,23 @@ const AddProduct = () => {
           </div>
 
           <div>
+            <label className="block text-gray-700 font-semibold">Status*</label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              required
+            >
+              <option value="">Select Status</option>
+              <option value="on_sale">On Sale</option>
+              <option value="featured">Featured</option>
+              <option value="not_deliverable">Not Deliverable</option>
+              <option value="out_of_stock">Out of Stock</option>
+            </select>
+          </div>
+
+
+          <div>
             <label className="block text-gray-700 font-semibold">Stock*</label>
             <input
               type="number"
@@ -213,7 +231,7 @@ const AddProduct = () => {
 
 
           <div>
-            <label className="block text-gray-700 font-semibold">Original Price*</label>
+            <label className="block text-gray-700 font-semibold">Price*</label>
             <input
               type="number"
               value={originalPrice}
@@ -223,16 +241,7 @@ const AddProduct = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-gray-700 font-semibold">Discount Price*</label>
-            <input
-              type="number"
-              value={discountPrice}
-              onChange={(e) => setDiscountPrice(e.target.value)}
-              className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
 
-            />
-          </div>
 
           <div className="col-span-3">
             <label className="block text-gray-700 font-semibold">Details*</label>

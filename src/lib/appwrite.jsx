@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Client,Databases, Account,Storage} from 'appwrite';
 
 export const client = new Client();

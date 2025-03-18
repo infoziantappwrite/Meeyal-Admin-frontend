@@ -8,6 +8,7 @@ import { useUser } from "./lib/UserContext"; // Import user context
 import Loader from "./pages/Loader";
 import AddProduct from "./pages/products/Addproduct";
 import Product from "./pages/products/Product";
+import Offers from "./pages/Offers/Offers";
 
 const App = () => {
   const { user, loading } = useUser(); // Get user context
@@ -41,7 +42,8 @@ const App = () => {
             <Routes>
               <Route path="/dashboard" element={<Dashboard searchQuery={searchQuery}/>} />
               <Route path="/add-product" element={<AddProduct/>} />
-              <Route path="/products" element={<Product searchQuery={searchQuery}/>} />              
+              <Route path="/products" element={<Product searchQuery={searchQuery}/>} /> 
+              <Route path="/offers" element={<Offers></Offers>} />             
             </Routes>
           </div>
         </div>

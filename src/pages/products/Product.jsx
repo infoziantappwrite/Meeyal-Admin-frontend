@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { databases, Query } from "../../lib/appwrite";
-import noimage from "../../../public/image.png";
+import noimage from "../../assets/image.png"
 import ProductDetails from "./ProductDetails";
 import EditProduct from "./EditProduct";
 import {
@@ -50,6 +50,7 @@ const Product = ({ searchQuery }) => {
 
       setProducts(filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
       setTotalPages(Math.ceil(filteredProducts.length / itemsPerPage));
+      //console.log(products);
     } catch (err) {
       console.error("Error fetching products:", err);
     }
@@ -144,7 +145,7 @@ const Product = ({ searchQuery }) => {
                   </td>
                   <td className="px-4 py-3 flex justify-center ">
                     {prod.productimages?.length > 0 ? (
-                      <img src={prod.productimages[0]} alt="Product" className="w-8 h-8 object-cover rounded" />
+                      <img src={prod.productimages[0]?.imageurl} alt="Product" className="w-8 h-8 object-cover rounded" />
                     ) : (
                       <img src={noimage} alt="Product" className="w-8 h-8 object-cover rounded" />
                     )}
