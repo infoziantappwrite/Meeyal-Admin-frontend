@@ -4,7 +4,7 @@ import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import noimage from "../../../public/image.png";
+import noimage from "../../assets/image.png"
 
 const ProductDetails = ({ product, onClose }) => {
   if (!product) return null;
@@ -23,21 +23,22 @@ const ProductDetails = ({ product, onClose }) => {
     {/* Left: Image Swiper */}
     <div className="w-1/3">
       <Swiper
-        modules={[Navigation, Pagination]}
-        navigation
-        pagination={{ clickable: true }}
-        className="rounded-lg"
-      >
-        {(product.productimages?.length > 0 ? product.productimages : [noimage]).map((img, index) => (
-          <SwiperSlide key={index}>
-            <img
-              src={img}
-              alt={`Product ${index + 1}`}
-              className="w-auto h-auto object-cover rounded-lg shadow"
-            />
-          </SwiperSlide>
-        ))}
-      </Swiper>
+  modules={[Navigation, Pagination]}
+  navigation
+  pagination={{ clickable: true }}
+  className="rounded-lg"
+>
+  {(product.productimages?.length > 0 ? product.productimages : [{ imageurl: noimage }]).map((img, index) => (
+    <SwiperSlide key={index}>
+      <img
+        src={img.imageurl} // ✅ Fix: Use img.imageurl instead of img
+        alt={`Product ${index + 1}`}
+        className="w-auto h-auto object-cover rounded-lg shadow"
+      />
+    </SwiperSlide>
+  ))}
+</Swiper>
+
     </div>
 
     {/* Right: Product Details with Auto Scroll */}

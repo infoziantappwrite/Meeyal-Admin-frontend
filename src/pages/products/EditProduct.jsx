@@ -5,12 +5,21 @@ import CategorySelector from "./CategorySelector";
 import gif from "../../assets/icons8-tick.gif"
 
 const EditProduct = ({ product, onClose }) => {
+  //console.log(product.productimages);
   const [productName, setProductName] = useState(product.productname);
   const [originalPrice, setOriginalPrice] = useState(product.originalprice);
   const [discountPrice, setDiscountPrice] = useState(product.discountprice || "");
   const [stock, setStock] = useState(product.stock);
   const [details, setDetails] = useState(product.details);
-  const [images, setImages] = useState(product.productimages || []);
+  const [images, setImages] = useState(
+    product.productimages?.map((img, index) => ({
+      id: img.$id, 
+      imageurl: img.imageurl || img,
+      key: `${img.$id || img.id || img}-${index}` // Ensure uniqueness
+    })) || []
+  );
+  
+
   const [category, setCategory] = useState(product.categories);
   const [subcategory, setSubcategory] = useState(product.subcategories);
   const [updating, setUpdating] = useState(false);
@@ -19,9 +28,10 @@ const EditProduct = ({ product, onClose }) => {
   const [showConfirm, setShowConfirm] = useState(false); // State for confirmation popup
   const [showSuccess, setShowSuccess] = useState(false);
 
-
+  //console.log(images)
   const handleImageChange = (newImages) => {
     setImages(newImages);
+    //console.log(images)
   };
   const handleCheck = () => {
     if (
@@ -59,7 +69,7 @@ const EditProduct = ({ product, onClose }) => {
         stock: parseInt(stock, 10),
         categories: category,
         subcategories: subcategory,
-        productimages: images,
+        productimages: images.map(img => img.id),
       };
 
       await databases.updateDocument(
