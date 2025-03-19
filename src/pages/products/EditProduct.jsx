@@ -10,20 +10,20 @@ const EditProduct = ({ product, onClose }) => {
   const [originalPrice, setOriginalPrice] = useState(product.originalprice);
   const [discountPrice, setDiscountPrice] = useState(product.discountprice || "");
   const [stock, setStock] = useState(product.stock);
+  const [status, setStatus] = useState(product.status);
   const [details, setDetails] = useState(product.details);
   const [images, setImages] = useState(
     product.productimages?.map((img, index) => ({
-      id: img.$id, 
+      id: img.$id,
       imageurl: img.imageurl || img,
       key: `${img.$id || img.id || img}-${index}` // Ensure uniqueness
     })) || []
   );
-  
+
 
   const [category, setCategory] = useState(product.categories);
   const [subcategory, setSubcategory] = useState(product.subcategories);
   const [updating, setUpdating] = useState(false);
-
   const [errorMessage, setErrorMessage] = useState("");
   const [showConfirm, setShowConfirm] = useState(false); // State for confirmation popup
   const [showSuccess, setShowSuccess] = useState(false);
@@ -37,11 +37,10 @@ const EditProduct = ({ product, onClose }) => {
     if (
       !productName.trim() ||
       !originalPrice ||
-      !stock ||
       !details.trim() ||
       !category ||
-      !subcategory ||
-      images.length === 0
+      !subcategory||
+      !status
     ) {
       setErrorMessage("Please fill all required fields!");
       setTimeout(() => {
@@ -68,6 +67,7 @@ const EditProduct = ({ product, onClose }) => {
         details,
         stock: parseInt(stock, 10),
         categories: category,
+        status,
         subcategories: subcategory,
         productimages: images.map(img => img.id),
       };
@@ -99,8 +99,8 @@ const EditProduct = ({ product, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center backdrop-blur-md z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-[90%]">
-        <div className="overflow-y-auto relative max-h-[90%]">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] overflow-y-auto relative max-h-[90%]">
+        <div className="overflow-y-auto relative max-h-[70%]">
           {/* Close Button */}
           <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700" onClick={onClose}>
             ✖
@@ -114,20 +114,35 @@ const EditProduct = ({ product, onClose }) => {
               <div>
 
                 <label className="block text-gray-700 font-semibold mt-4 mb-1">Product Name*</label>
-                <input type="text" className="border p-2 w-full rounded" value={productName} onChange={(e) => setProductName(e.target.value)} required />
+                <input type="text" className="border p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-gray-400" value={productName} onChange={(e) => setProductName(e.target.value)} required />
                 {!productName.trim() && <p className="text-red-500 text-sm">Product name is required.</p>}
               </div>
               <div>
                 <label className="block text-gray-700 font-semibold mt-4 mb-1">Original Price*</label>
-                <input type="number" className="border p-2 w-full rounded" value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} required />
+                <input type="number" className="border p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-gray-400" value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} required />
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mt-4 mb-1">Discount Price</label>
-                <input type="number" className="border p-2 w-full rounded" value={discountPrice} onChange={(e) => setDiscountPrice(e.target.value)} />
+                <label className="block text-gray-700 font-semibold mt-4 mb-1">Discount % </label>
+                <input type="number" className="border p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-gray-400" value={discountPrice} onChange={(e) => setDiscountPrice(e.target.value)} />
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mt-4 mb-1">Stock*</label>
-                <input type="number" className="border p-2 w-full rounded" value={stock} onChange={(e) => setStock(e.target.value)} required />
+                <label className="block text-gray-700 font-semibold mt-4 mb-1 ">Stock*</label>
+                <input type="number" className="border p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-gray-400" value={stock} onChange={(e) => setStock(e.target.value)} required />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-semibold mt-4 mb-1">Status*</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  required
+                >
+                  <option value="">Select Status</option>
+                  <option value="on_sale">On Sale</option>
+                  <option value="featured">Featured</option>
+                  <option value="not_deliverable">Not Deliverable</option>
+
+                </select>
               </div>
             </div>
 
@@ -145,7 +160,7 @@ const EditProduct = ({ product, onClose }) => {
           {/* Details Field */}
           <div>
             <label className="block font-semibold text-gray-700 mt-4 mb-1">Details*</label>
-            <textarea className="border p-2 w-full rounded h-[100px]" value={details} onChange={(e) => setDetails(e.target.value)}></textarea>
+            <textarea className="border p-2 w-full rounded h-[100px] focus:outline-none focus:ring-2 focus:ring-gray-400" value={details} onChange={(e) => setDetails(e.target.value)}></textarea>
           </div>
 
           {/* Image Upload */}

@@ -12,6 +12,7 @@ const AddProduct = () => {
   const navigate = useNavigate();
   const [productName, setProductName] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
+  const [discountPrice, setDiscountPrice] = useState("");
   const [details, setDetails] = useState("");
   const [stock, setStock] = useState("");
   const [status, setStatus] = useState("");
@@ -68,6 +69,7 @@ const AddProduct = () => {
       const productData = {
         productname: productName,
         originalprice: parseFloat(originalPrice),
+        discountprice: parseFloat(discountPrice),
         details,
         stock: parseInt(stock, 10),
         categories: category,
@@ -100,6 +102,7 @@ const AddProduct = () => {
       setSubcategory("");
       setStatus("");
       setImages([]);
+      setDiscountPrice('');
       setClearImages(true);
       setTimeout(() => {
         setShowSuccess(false);
@@ -213,7 +216,7 @@ const AddProduct = () => {
               <option value="on_sale">On Sale</option>
               <option value="featured">Featured</option>
               <option value="not_deliverable">Not Deliverable</option>
-              <option value="out_of_stock">Out of Stock</option>
+            
             </select>
           </div>
 
@@ -236,6 +239,16 @@ const AddProduct = () => {
               type="number"
               value={originalPrice}
               onChange={(e) => setOriginalPrice(e.target.value)}
+              className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-semibold">Discount %</label>
+            <input
+              type="number"
+              value={discountPrice}
+              onChange={(e) => setDiscountPrice(e.target.value)}
               className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
               required
             />

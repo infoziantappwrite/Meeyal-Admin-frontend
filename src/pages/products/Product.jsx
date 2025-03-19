@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { databases, Query } from "../../lib/appwrite";
+import { databases, Query, storage } from "../../lib/appwrite";
 import noimage from "../../assets/image.png"
 import ProductDetails from "./ProductDetails";
 import EditProduct from "./EditProduct";
@@ -67,10 +67,35 @@ const Product = ({ searchQuery }) => {
       setShowDeleteConfirm(true);
     }
   };
+  const removeImage = async (id) => {
+    try {
+      await storage.deleteFile(import.meta.env.VITE_APPWRITE_BUCKET_ID, id);
+      await databases.deleteDocument(
+        import.meta.env.VITE_APPWRITE_DATABASE_ID,
+        import.meta.env.VITE_APPWRITE_PRODUCTIMAGES_COLLECTION_ID,
+        id
+      );
+      console.log("success");
+
+    } catch (error) {
+      console.error("Error deleting image:", error);
+    }
+  };
 
   const handleDelete = async () => {
     try {
       for (const productId of selectedProducts) {
+        // Fetch the product details to get associated images
+        const product = await databases.getDocument(
+          import.meta.env.VITE_APPWRITE_DATABASE_ID,
+          import.meta.env.VITE_APPWRITE_PRODUCT_COLLECTION_ID,
+          productId
+        );
+        if (product.productimages && product.productimages.length > 0) {
+          for (const image of product.productimages) {
+            await removeImage(image.$id);
+          }
+        }
         await databases.deleteDocument(
           import.meta.env.VITE_APPWRITE_DATABASE_ID,
           import.meta.env.VITE_APPWRITE_PRODUCT_COLLECTION_ID,
@@ -84,6 +109,7 @@ const Product = ({ searchQuery }) => {
       console.error("Error deleting products:", err);
     }
   };
+
 
 
   useEffect(() => {
