@@ -47,9 +47,10 @@ const ProductDetails = ({ product, onClose }) => {
 
       <div className="space-y-2 text-gray-700">
         <p><strong>Price:</strong> ₹{product.originalprice}</p>
-        <p><strong>Discount Price:</strong> ₹{product.discountprice}</p>
+        <p><strong>Discount:</strong> {product.discountprice||0} %</p>
         <p><strong>Stock:</strong> {product.stock} units</p>
         <p><strong>Category:</strong> {product.categories?.name || "NA"}</p>
+        <p><strong>Status:</strong> {product.status ? product.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "NA"}</p>
         <p><strong>Subcategory:</strong> {product.subcategories?.name || "NA"}</p>
         <p><strong>Details:</strong> {product.details}</p>
         <p><strong>Created At:</strong> {new Date(product.$createdAt).toLocaleString()}</p>
