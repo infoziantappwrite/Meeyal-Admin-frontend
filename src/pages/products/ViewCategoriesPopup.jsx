@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { databases } from "../../lib/appwrite";
 import { Edit, Trash2, X, Check } from "lucide-react";
 
 const ViewCategoriesPopup = ({ isOpen, onClose }) => {
@@ -18,11 +17,9 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
 
   const fetchCategories = async () => {
     try {
-      const response = await databases.listDocuments(
-        import.meta.env.VITE_APPWRITE_DATABASE_ID,
-        import.meta.env.VITE_APPWRITE_CATA_COLLECTION_ID
-      );
-      setCategories(response.documents);
+      const res = await fetch("http://localhost:5000/api/categories");
+      const data = await res.json();
+      setCategories(data);
     } catch (err) {
       console.error("Error fetching categories:", err);
     }
@@ -30,11 +27,9 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
 
   const fetchSubcategories = async () => {
     try {
-      const response = await databases.listDocuments(
-        import.meta.env.VITE_APPWRITE_DATABASE_ID,
-        import.meta.env.VITE_APPWRITE_SUBCATA_COLLECTION_ID
-      );
-      setSubcategories(response.documents);
+      const res = await fetch("http://localhost:5000/api/subcategories");
+      const data = await res.json();
+      setSubcategories(data);
     } catch (err) {
       console.error("Error fetching subcategories:", err);
     }
@@ -47,14 +42,13 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
 
   const handleUpdate = async (id, type) => {
     try {
-      await databases.updateDocument(
-        import.meta.env.VITE_APPWRITE_DATABASE_ID,
-        type === "category"
-          ? import.meta.env.VITE_APPWRITE_CATA_COLLECTION_ID
-          : import.meta.env.VITE_APPWRITE_SUBCATA_COLLECTION_ID,
-        id,
-        { name: updatedName }
-      );
+      const endpoint = type === "category" ? `http://localhost:5000/api/categories/${id}` : `http://localhost:5000/api/subcategories/${id}`;
+      await fetch(endpoint, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: updatedName }),
+      });
+
       setEditing(null);
       fetchCategories();
       fetchSubcategories();
@@ -69,13 +63,11 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
 
   const handleDelete = async () => {
     try {
-      await databases.deleteDocument(
-        import.meta.env.VITE_APPWRITE_DATABASE_ID,
-        deletePopup.type === "category"
-          ? import.meta.env.VITE_APPWRITE_CATA_COLLECTION_ID
-          : import.meta.env.VITE_APPWRITE_SUBCATA_COLLECTION_ID,
-        deletePopup.id
-      );
+      const endpoint = deletePopup.type === "category"
+        ? `http://localhost:5000/api/categories/${deletePopup.id}`
+        : `http://localhost:5000/api/subcategories/${deletePopup.id}`;
+      await fetch(endpoint, { method: "DELETE" });
+
       setDeletePopup({ show: false, id: null, type: "" });
       fetchCategories();
       fetchSubcategories();
@@ -89,7 +81,6 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-md z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg relative">
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-600 transition"
@@ -106,8 +97,8 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
             <p className="text-gray-500">No categories found.</p>
           ) : (
             categories.map((cat) => (
-              <div key={cat.$id} className="flex items-center justify-between p-2 border-b">
-                {editing === cat.$id ? (
+              <div key={cat._id} className="flex items-center justify-between p-2 border-b">
+                {editing === cat._id ? (
                   <input
                     type="text"
                     value={updatedName}
@@ -119,16 +110,16 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
                 )}
 
                 <div className="flex gap-2">
-                  {editing === cat.$id ? (
-                    <button onClick={() => handleUpdate(cat.$id, "category")} className="text-green-500">
+                  {editing === cat._id ? (
+                    <button onClick={() => handleUpdate(cat._id, "category")} className="text-green-500">
                       <Check />
                     </button>
                   ) : (
-                    <button onClick={() => handleEdit(cat.$id, cat.name)} className="text-blue-500">
+                    <button onClick={() => handleEdit(cat._id, cat.name)} className="text-blue-500">
                       <Edit />
                     </button>
                   )}
-                  <button onClick={() => confirmDelete(cat.$id, "category")} className="text-red-500">
+                  <button onClick={() => confirmDelete(cat._id, "category")} className="text-red-500">
                     <Trash2 />
                   </button>
                 </div>
@@ -144,8 +135,8 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
             <p className="text-gray-500">No subcategories found.</p>
           ) : (
             subcategories.map((sub) => (
-              <div key={sub.$id} className="flex items-center justify-between p-2 border-b">
-                {editing === sub.$id ? (
+              <div key={sub._id} className="flex items-center justify-between p-2 border-b">
+                {editing === sub._id ? (
                   <input
                     type="text"
                     value={updatedName}
@@ -157,16 +148,16 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
                 )}
 
                 <div className="flex gap-2">
-                  {editing === sub.$id ? (
-                    <button onClick={() => handleUpdate(sub.$id, "subcategory")} className="text-green-500">
+                  {editing === sub._id ? (
+                    <button onClick={() => handleUpdate(sub._id, "subcategory")} className="text-green-500">
                       <Check />
                     </button>
                   ) : (
-                    <button onClick={() => handleEdit(sub.$id, sub.name)} className="text-blue-500">
+                    <button onClick={() => handleEdit(sub._id, sub.name)} className="text-blue-500">
                       <Edit />
                     </button>
                   )}
-                  <button onClick={() => confirmDelete(sub.$id, "subcategory")} className="text-red-500">
+                  <button onClick={() => confirmDelete(sub._id, "subcategory")} className="text-red-500">
                     <Trash2 />
                   </button>
                 </div>
@@ -179,7 +170,6 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
         {deletePopup.show && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-md z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg w-96 relative">
-              {/* Close Button */}
               <button
                 onClick={() => setDeletePopup({ show: false, id: null, type: "" })}
                 className="absolute top-3 right-3 bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-600 transition"

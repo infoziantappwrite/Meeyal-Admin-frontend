@@ -15,11 +15,13 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
+import axios from "axios";
 
 
 const Product = ({ searchQuery }) => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -29,92 +31,61 @@ const Product = ({ searchQuery }) => {
   const [showEditProduct, setshowEditProduct] = useState(false);
   const itemsPerPage = 7;
 
-
   const fetchProducts = async () => {
     try {
-      const response = await databases.listDocuments(
-        import.meta.env.VITE_APPWRITE_DATABASE_ID,
-        import.meta.env.VITE_APPWRITE_PRODUCT_COLLECTION_ID,
-        [Query.limit(1000)] // Fetch all items (adjust limit as needed)
-      );
+      const response = await axios.get("https://meeyaladminbackend-production.up.railway.app/api/products");
 
-      let filteredProducts = response.documents;
+      console.log(response.data);
+
+
+      let filteredProducts = response.data;
 
       if (searchQuery) {
         filteredProducts = filteredProducts.filter((prod) =>
-          prod.productname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          prod.categories?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          prod.subcategories?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+          prod.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          prod.category?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          prod.subCategory?.name?.toLowerCase().includes(searchQuery.toLowerCase())
         );
       }
 
-      setProducts(filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const paginated = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+
+      setProducts(paginated);
       setTotalPages(Math.ceil(filteredProducts.length / itemsPerPage));
-      //console.log(products);
     } catch (err) {
       console.error("Error fetching products:", err);
     }
   };
+
   const handleSelect = (id) => {
     setSelectedProducts((prev) =>
       prev.includes(id) ? prev.filter((prodId) => prodId !== id) : [...prev, id]
     );
   };
 
-  // Handle delete confirmation
   const handleDeleteConfirm = () => {
     if (selectedProducts.length > 0) {
       setShowDeleteConfirm(true);
-    }
-  };
-  const removeImage = async (id) => {
-    try {
-      await storage.deleteFile(import.meta.env.VITE_APPWRITE_BUCKET_ID, id);
-      await databases.deleteDocument(
-        import.meta.env.VITE_APPWRITE_DATABASE_ID,
-        import.meta.env.VITE_APPWRITE_PRODUCTIMAGES_COLLECTION_ID,
-        id
-      );
-      console.log("success");
-
-    } catch (error) {
-      console.error("Error deleting image:", error);
     }
   };
 
   const handleDelete = async () => {
     try {
       for (const productId of selectedProducts) {
-        // Fetch the product details to get associated images
-        const product = await databases.getDocument(
-          import.meta.env.VITE_APPWRITE_DATABASE_ID,
-          import.meta.env.VITE_APPWRITE_PRODUCT_COLLECTION_ID,
-          productId
-        );
-        if (product.productimages && product.productimages.length > 0) {
-          for (const image of product.productimages) {
-            await removeImage(image.$id);
-          }
-        }
-        await databases.deleteDocument(
-          import.meta.env.VITE_APPWRITE_DATABASE_ID,
-          import.meta.env.VITE_APPWRITE_PRODUCT_COLLECTION_ID,
-          productId
-        );
+        await axios.delete(`https://meeyaladminbackend-production.up.railway.app/api/products/${productId}`);
       }
       setShowDeleteConfirm(false);
-      setSelectedProducts([]); // Clear selection
-      fetchProducts(); // Refresh product list
+      setSelectedProducts([]);
+      fetchProducts();
     } catch (err) {
       console.error("Error deleting products:", err);
     }
   };
 
-
-
   useEffect(() => {
     fetchProducts();
-  }, [currentPage, searchQuery, showViewProduct, showEditProduct, products]);
+  }, [currentPage, searchQuery, showViewProduct, showEditProduct]);
 
   return (
     <div className="p-4">
@@ -169,21 +140,28 @@ const Product = ({ searchQuery }) => {
                       className="w-5 h-5 rounded-md accent-primary cursor-pointer"
                     />
                   </td>
-                  <td className="px-4 py-3 flex justify-center ">
-                    {prod.productimages?.length > 0 ? (
-                      <img src={prod.productimages[0]?.imageurl} alt="Product" className="w-8 h-8 object-cover rounded" />
+                  <td className="px-4 py-3 flex justify-center">
+                    {prod.productImages?.length > 0 ? (
+                      <img
+                        src={prod.productImages[0].imageUrl}
+                        alt="Product"
+                        className="w-13 h-16 object-cover rounded"
+                      />
                     ) : (
                       <img src={noimage} alt="Product" className="w-8 h-8 object-cover rounded" />
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    {prod.productname.length > 15 ? prod.productname.substring(0, 15) + "..." : prod.productname}
+                    {prod.productName ? (prod.productName.length > 15 ? prod.productName.substring(0, 15) + "..." : prod.productName) : "NA"}
                   </td>
 
-                  <td className="px-4 py-3 ">₹ {prod.originalprice}</td>
-                  <td className="px-4 py-3 ">{prod.categories?.name || "NA"}</td>
-                  <td className="px-4 py-3 ">{prod.subcategories?.name || "NA"}</td>
-                  <td className="px-4 py-3 ">{prod.stock}</td>
+                  <td className="px-4 py-3">₹ {prod.originalPrice}</td>
+                    
+                  <td className="px-4 py-3">{prod.category?.name || "NA"}</td>
+
+                  <td className="px-4 py-3">{prod.subCategory?.name || "NA"}</td>
+
+                  <td className="px-4 py-3">{prod.stock}</td>
                   <td className="px-4 py-3 flex gap-3 justify-center ">
                     <button className="text-blue-500 hover:text-blue-600" onClick={() => { setSelectedProduct(prod), setshowEditProduct(true) }}>
                       <Edit />
