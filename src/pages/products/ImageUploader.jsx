@@ -17,7 +17,7 @@ const ImageUploader = ({ onImagesChange, clearImages, isimages }) => {
 
   setUploading(true);
   try {
-    const res = await fetch("http://localhost:5000/api/uploads/images", {
+    const res = await fetch("https://meeyaladminbackend-production.up.railway.app/api/uploads/images", {
       method: "POST",
       body: formData,
     });
@@ -35,7 +35,7 @@ const ImageUploader = ({ onImagesChange, clearImages, isimages }) => {
 
   const removeImage = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/uploads/${id}`, {
+      await fetch(`https://meeyaladminbackend-production.up.railway.app/api/uploads/${id}`, {
         method: "DELETE",
       });
 

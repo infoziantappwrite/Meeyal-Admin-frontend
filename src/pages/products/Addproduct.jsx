@@ -31,9 +31,9 @@ const AddProduct = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const CATEGORIES_API = "http://localhost:5000/api/categories";
-  const SUBCATEGORIES_API = "http://localhost:5000/api/subcategories";
-  const PRODUCTS_API = "http://localhost:5000/api/products";
+  const CATEGORIES_API = "https://meeyaladminbackend-production.up.railway.app/api/categories";
+  const SUBCATEGORIES_API = "https://meeyaladminbackend-production.up.railway.app/api/subcategories";
+  const PRODUCTS_API = "https://meeyaladminbackend-production.up.railway.app/api/products";
 
   useEffect(() => {
     const fetchCategories = async () => {
