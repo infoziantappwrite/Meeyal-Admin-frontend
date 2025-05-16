@@ -17,7 +17,7 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/categories");
+      const res = await fetch("https://meeyaladminbackend-production.up.railway.app/api/categories");
       const data = await res.json();
       setCategories(data);
     } catch (err) {
@@ -27,7 +27,7 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
 
   const fetchSubcategories = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/subcategories");
+      const res = await fetch("https://meeyaladminbackend-production.up.railway.app/api/subcategories");
       const data = await res.json();
       setSubcategories(data);
     } catch (err) {
@@ -42,7 +42,7 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
 
   const handleUpdate = async (id, type) => {
     try {
-      const endpoint = type === "category" ? `http://localhost:5000/api/categories/${id}` : `http://localhost:5000/api/subcategories/${id}`;
+      const endpoint = type === "category" ? `https://meeyaladminbackend-production.up.railway.app/api/categories/${id}` : `https://meeyaladminbackend-production.up.railway.app/api/subcategories/${id}`;
       await fetch(endpoint, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -64,8 +64,8 @@ const ViewCategoriesPopup = ({ isOpen, onClose }) => {
   const handleDelete = async () => {
     try {
       const endpoint = deletePopup.type === "category"
-        ? `http://localhost:5000/api/categories/${deletePopup.id}`
-        : `http://localhost:5000/api/subcategories/${deletePopup.id}`;
+        ? `https://meeyaladminbackend-production.up.railway.app/api/categories/${deletePopup.id}`
+        : `https://meeyaladminbackend-production.up.railway.app/api/subcategories/${deletePopup.id}`;
       await fetch(endpoint, { method: "DELETE" });
 
       setDeletePopup({ show: false, id: null, type: "" });

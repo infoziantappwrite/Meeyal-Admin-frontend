@@ -16,7 +16,7 @@ const AddCategoryAndSubcategory = ({ onClose }) => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/categories");
+      const response = await axios.get("https://meeyaladminbackend-production.up.railway.app/api/categories");
       setCategories(response.data);
     } catch (err) {
       console.error("Error fetching categories:", err);
@@ -25,7 +25,7 @@ const AddCategoryAndSubcategory = ({ onClose }) => {
 
   const addCategory = async () => {
     try {
-      await axios.post("http://localhost:5000/api/categories", { name: newCategory });
+      await axios.post("https://meeyaladminbackend-production.up.railway.app/api/categories", { name: newCategory });
       setSuccessMessage("Category added successfully!");
       setNewCategory("");
       fetchCategories();
@@ -44,7 +44,7 @@ const AddCategoryAndSubcategory = ({ onClose }) => {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/subcategories", {
+      await axios.post("https://meeyaladminbackend-production.up.railway.app/api/subcategories", {
         name: newSubcategory,
         category: selectedCategory,
       });
