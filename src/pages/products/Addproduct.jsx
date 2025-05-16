@@ -1,41 +1,46 @@
 import { useState, useEffect } from "react";
-import { databases } from "../../lib/appwrite";
-import { ID } from "appwrite";
-import { Plus, Package, List } from "lucide-react"; // Import Lucide icons
+import { Plus, Package, List } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import AddCategoryAndSubcategory from "./AddCategoryAndSubcategory";
 import ViewCategoriesPopup from "./ViewCategoriesPopup";
 import ImageUploader from "./ImageUploader";
-import { useNavigate } from "react-router-dom";
-import gif from "../../assets/icons8-tick.gif"
+import gif from "../../assets/icons8-tick.gif";
 
 const AddProduct = () => {
   const navigate = useNavigate();
+
+  // Form fields
   const [productName, setProductName] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
-  const [discountPrice, setDiscountPrice] = useState("");
+  const [discountPercent, setDiscountPercent] = useState("");
   const [details, setDetails] = useState("");
   const [stock, setStock] = useState("");
   const [status, setStatus] = useState("");
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
+
+  // Dropdown data
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
-  const [images, setImages] = useState([]);
-  const [showCancelPopup, setShowCancelPopup] = useState(false);
   const [loadingSubcategories, setLoadingSubcategories] = useState(false);
+
+  // Image & Modal state
+  const [images, setImages] = useState([]);
+  const [clearImages, setClearImages] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [clearImages, setClearImages] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  const CATEGORIES_API = "http://localhost:5000/api/categories";
+  const SUBCATEGORIES_API = "http://localhost:5000/api/subcategories";
+  const PRODUCTS_API = "http://localhost:5000/api/products";
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await databases.listDocuments(
-          import.meta.env.VITE_APPWRITE_DATABASE_ID,
-          import.meta.env.VITE_APPWRITE_CATA_COLLECTION_ID
-        );
-        setCategories(response.documents);
+        const response = await fetch(CATEGORIES_API);
+        const data = await response.json();
+        setCategories(data);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
@@ -46,70 +51,63 @@ const AddProduct = () => {
   const fetchSubcategories = async (categoryId) => {
     setLoadingSubcategories(true);
     try {
-      const res = await databases.listDocuments(
-        import.meta.env.VITE_APPWRITE_DATABASE_ID,
-        import.meta.env.VITE_APPWRITE_SUBCATA_COLLECTION_ID,
-
-      );
-      const filteredSubcategories = res.documents.filter(sub => sub.categories.$id === categoryId);
-      setSubcategories(filteredSubcategories);
-      //setSubcategories(res.documents);
+      const res = await fetch(`${SUBCATEGORIES_API}/${categoryId}`);
+      const data = await res.json();
+      setSubcategories(data);
     } catch (err) {
       console.error("Error fetching subcategories:", err);
     }
     setLoadingSubcategories(false);
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      // Convert values to correct data types
-      const productData = {
-        productname: productName,
-        originalprice: parseFloat(originalPrice),
-        discountprice: parseFloat(discountPrice),
-        details,
-        stock: parseInt(stock, 10),
-        categories: category,
-        subcategories: subcategory,
-        productimages: images.map(img => img.id), // Array of URLs
-        status: status,
-      };
-      //console.log(productData)
+      const formData = new FormData();
 
-      // Save to Appwrite database
-      await databases.createDocument(
-        import.meta.env.VITE_APPWRITE_DATABASE_ID,
-        import.meta.env.VITE_APPWRITE_PRODUCT_COLLECTION_ID,
-        ID.unique(),
-        productData
-      );
+      formData.append("productName", productName);
+      formData.append("originalPrice", originalPrice);
+      formData.append("discountPrice", discountPercent);
+      formData.append("details", details);
+      formData.append("stock", stock);
+      formData.append("category", category);
+      formData.append("subCategory", subcategory);
+      formData.append("status", status);
+
+      // Append image files directly
+      images.forEach((img, index) => {
+        formData.append("productImages", img.file); // ✅ exact match
+      });
+
+      formData.forEach((value, key) => {
+        console.log(`${key}:`, value);
+      });
+
+
+      const response = await fetch(PRODUCTS_API, {
+        method: "POST",
+        body: formData,
+      });
+
+
+      if (!response.ok) throw new Error("Failed to add product");
 
       setShowSuccess(true);
-
-
-      //console.log("Product added:", productData);
-
-      // Reset form fields after successful submission
       setProductName("");
       setOriginalPrice("");
-
+      setDiscountPercent("");
       setDetails("");
       setStock("");
       setCategory("");
       setSubcategory("");
       setStatus("");
       setImages([]);
-      setDiscountPrice('');
       setClearImages(true);
+
       setTimeout(() => {
         setShowSuccess(false);
-        setTimeout(() => {
-
-          setClearImages(false);
-        }, 500); // Small delay for fade-out effect
+        setTimeout(() => setClearImages(false), 500);
       }, 2500);
     } catch (error) {
       console.error("Error adding product:", error);
@@ -117,197 +115,215 @@ const AddProduct = () => {
     }
   };
 
-
   return (
     <div className="p-4">
-      {/* Header with Add Category & Add Subcategory */}
+      {/* Header */}
       <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-300">
         <h2 className="text-xl font-bold text-black flex items-center gap-2">
-          < Package size={24}></Package> Add New Product
+          <Package size={24} /> Add New Product
         </h2>
-        {/* Success Message with Fade Effect */}
-
         <div className="flex gap-4">
-
           <button
             onClick={() => setIsPopupOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
           >
             <List size={20} /> Manage Categories
           </button>
-          <button className="bg-primary border  px-4 py-2  hover:bg-hover_primary  text-white rounded-md flex items-center gap-2" onClick={() => setShowPopup(true)}>
+          <button
+            onClick={() => setShowPopup(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-hover_primary"
+          >
             <Plus size={16} /> Add Category / Subcategory
           </button>
-          {/* <button className="bg-green-500 text-white p-2 rounded-md flex items-center gap-2">
-            <Plus size={16} /> Add New Subcategory
-          </button> */}
         </div>
       </div>
 
+      {/* Form */}
       <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-300">
-        <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-4 ">
-          {/* Left Column */}
+        <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block text-gray-700 font-semibold">Product Name*</label>
+            <label className="block font-semibold text-gray-700">Product Name*</label>
             <input
               type="text"
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
-              className="w-full p-2 border rounded text-gray-800  focus:ring-gray-400 focus:outline-none focus:ring-2 "
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-gray-800"
               required
             />
           </div>
 
-
           <div>
-            <label className="block text-gray-700 font-semibold">Category*</label>
+            <label className="block font-semibold text-gray-700">Category*</label>
             <select
               value={category}
-              onChange={(e) => { setCategory(e.target.value), fetchSubcategories(e.target.value) }}
-              className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              onChange={(e) => {
+                setCategory(e.target.value);
+                fetchSubcategories(e.target.value);
+              }}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-gray-800"
               required
               disabled={categories.length === 0}
             >
-              {categories.length > 0 ? (
-                <>
-                  <option value="">Select Category</option>
-                  {categories.map((cat) => (
-                    <option key={cat.$id} value={cat.$id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </>
-              ) : (
-                <option value="">No categories available add new one</option>
-              )}
+              <option value="">Select Category</option>
+              {categories.map((cat) => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-gray-700 font-semibold">Subcategory*</label>
+            <label className="block font-semibold text-gray-700">Subcategory*</label>
             <select
               value={subcategory}
               onChange={(e) => setSubcategory(e.target.value)}
-              className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-gray-800"
               required
-              disabled={loadingSubcategories || subcategories.length === 0} // Disable if loading or empty
+              disabled={loadingSubcategories || subcategories.length === 0}
             >
               <option value="">
-                {loadingSubcategories ? "Loading..." : subcategories.length > 0 ? "Select Subcategory" : "No subcategories available"}
+                {loadingSubcategories
+                  ? "Loading..."
+                  : subcategories.length > 0
+                    ? "Select Subcategory"
+                    : "No subcategories available"}
               </option>
-              {subcategories.length > 0 &&
-                subcategories.map((sub) => (
-                  <option key={sub.$id} value={sub.$id}>
-                    {sub.name}
-                  </option>
-                ))}
+              {subcategories.map((sub) => (
+                <option key={sub._id} value={sub._id}>
+                  {sub.name}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-gray-700 font-semibold">Status*</label>
+            <label className="block font-semibold text-gray-700">Status*</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-gray-800"
               required
             >
               <option value="">Select Status</option>
               <option value="on_sale">On Sale</option>
               <option value="featured">Featured</option>
               <option value="not_deliverable">Not Deliverable</option>
-            
             </select>
           </div>
 
-
           <div>
-            <label className="block text-gray-700 font-semibold">Stock*</label>
+            <label className="block font-semibold text-gray-700">Stock*</label>
             <input
               type="number"
               value={stock}
               onChange={(e) => setStock(e.target.value)}
-              className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-gray-800"
               required
             />
           </div>
 
-
           <div>
-            <label className="block text-gray-700 font-semibold">Price*</label>
+            <label className="block font-semibold text-gray-700">Price*</label>
             <input
               type="number"
               value={originalPrice}
               onChange={(e) => setOriginalPrice(e.target.value)}
-              className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-gray-800"
               required
             />
           </div>
+
           <div>
-            <label className="block text-gray-700 font-semibold">Discount %</label>
+            <label className="block font-semibold text-gray-700">Discount %</label>
             <input
               type="number"
-              value={discountPrice}
-              onChange={(e) => setDiscountPrice(e.target.value)}
-              className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
-              required
+              value={discountPercent}
+              onChange={(e) => setDiscountPercent(e.target.value)}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-gray-800"
             />
           </div>
 
-
-
           <div className="col-span-3">
-            <label className="block text-gray-700 font-semibold">Details*</label>
+            <label className="block font-semibold text-gray-700">Details*</label>
             <textarea
               value={details}
               onChange={(e) => setDetails(e.target.value)}
-              className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-gray-800"
               required
             />
           </div>
 
-          <ImageUploader onImagesChange={setImages} clearImages={clearImages} />
+          <div className="col-span-3">
+            <label className="block font-semibold text-gray-700">Upload Images*</label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => {
+                const files = Array.from(e.target.files).map((file) => ({
+                  file,
+                  preview: URL.createObjectURL(file),
+                }));
+                setImages(files);
+              }}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-gray-800"
+              required
+            />
+
+            {images.length > 0 && (
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {images.map((img, index) => (
+                  <div key={index} className="relative border rounded p-1">
+                    <img
+                      src={img.preview}
+                      alt={`preview-${index}`}
+                      className="w-full h-24 object-cover rounded"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setImages(images.filter((_, i) => i !== index))
+                      }
+                      className="absolute top-1 right-1 text-red-600 bg-white rounded-full p-1"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
 
           <div className="col-span-3 flex justify-end gap-4">
-            <button type="button" onClick={() => navigate("/products")} className="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded-md">
+            <button
+              type="button"
+              onClick={() => navigate("/products")}
+              className="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+            >
               Cancel
             </button>
-            <button type="submit" className="text-white px-4 py-2 rounded-md bg-green-500 border  hover:bg-green-700">
+            <button
+              type="submit"
+              className="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded-md"
+            >
               Confirm
             </button>
           </div>
         </form>
       </div>
 
-      {/* Cancel Confirmation Popup */}
-      {showCancelPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-md z-50">
-          <div className="bg-white p-6 rounded-md shadow-lg">
-            <p className="text-lg font-semibold mb-4 text-gray-800">Are you sure you want to cancel?</p>
-            <div className="flex justify-end gap-4">
-              <button onClick={() => setShowCancelPopup(false)} className="bg-gray-500 text-white px-4 py-2 rounded-md">No</button>
-              <button onClick={() => setShowCancelPopup(false)} className="bg-red-500 text-white px-4 py-2 rounded-md">Yes</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Popups */}
       {showPopup && <AddCategoryAndSubcategory onClose={() => setShowPopup(false)} />}
       {isPopupOpen && <ViewCategoriesPopup isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)} />}
       {showSuccess && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center flex flex-col items-center animate-fade-in">
-            {/* Success GIF Icon */}
             <img src={gif} alt="Success" className="w-16 h-16 mb-2" />
-
-            {/* Success Message */}
             <h2 className="text-lg font-bold text-green-700">Product Added Successfully</h2>
-
-            {/* Close Button */}
             <button
-              onClick={() => {
-                setShowSuccess(false);
-                // Close modal
-              }}
+              onClick={() => setShowSuccess(false)}
               className="mt-4 bg-green-500 text-white px-4 py-2 rounded-md w-40"
             >
               OK

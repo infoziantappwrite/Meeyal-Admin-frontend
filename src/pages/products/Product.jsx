@@ -25,6 +25,8 @@ const Product = ({ searchQuery }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState([]);
+  
+  
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showViewProduct, setshowViewProduct] = useState(false);
@@ -34,8 +36,6 @@ const Product = ({ searchQuery }) => {
   const fetchProducts = async () => {
     try {
       const response = await axios.get("https://meeyaladminbackend-production.up.railway.app/api/products");
-
-      console.log(response.data);
 
 
       let filteredProducts = response.data;
@@ -113,7 +113,7 @@ const Product = ({ searchQuery }) => {
                 <input
                   type="checkbox"
                   onChange={(e) =>
-                    setSelectedProducts(e.target.checked ? products.map((p) => p.$id) : [])
+                    setSelectedProducts(e.target.checked ? products.map((p) => p._id) : [])
                   }
                   className="w-5 h-5 rounded-md accent-primary cursor-pointer"
                   checked={selectedProducts.length === products.length && products.length > 0}
@@ -131,12 +131,12 @@ const Product = ({ searchQuery }) => {
           <tbody>
             {products.length > 0 ? (
               products.map((prod) => (
-                <tr key={prod.$id} className="hover:bg-gray-50 border-b last:rounded-b-lg">
+                <tr key={prod._id} className="hover:bg-gray-50 border-b last:rounded-b-lg">
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
-                      checked={selectedProducts.includes(prod.$id)}
-                      onChange={() => handleSelect(prod.$id)}
+                      checked={selectedProducts.includes(prod._id)}
+                      onChange={() => handleSelect(prod._id)}
                       className="w-5 h-5 rounded-md accent-primary cursor-pointer"
                     />
                   </td>
@@ -167,9 +167,16 @@ const Product = ({ searchQuery }) => {
                       <Edit />
                     </button>
 
-                    <button className="text-green-500 hover:text-green-600" onClick={() => { setSelectedProduct(prod), setshowViewProduct(true) }}>
-                      <Eye />
-                    </button>
+                   <button
+  className="text-green-500 hover:text-green-600"
+  onClick={() => {
+    setSelectedProduct(prod);
+    setshowViewProduct(true);
+  }}
+>
+  <Eye />
+</button>
+
                   </td>
                 </tr>
               ))
