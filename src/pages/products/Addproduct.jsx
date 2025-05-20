@@ -31,7 +31,7 @@ const AddProduct = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const CATEGORIES_API = "https://meeyaladminbackend-production.up.railway.app/api/categories";
+   const CATEGORIES_API = "https://meeyaladminbackend-production.up.railway.app/api/categories";
   const SUBCATEGORIES_API = "https://meeyaladminbackend-production.up.railway.app/api/subcategories";
   const PRODUCTS_API = "https://meeyaladminbackend-production.up.railway.app/api/products";
 
