@@ -52,17 +52,20 @@ const EditProduct = ({ product, onClose }) => {
 };
 
 
-  const removeImage = async (id) => {
-    try {
-      await fetch(`https://meeyaladminbackend-production.up.railway.app/api/uploads/${id}`, {
-        method: "DELETE",
-      });
-      const updatedImages = images.filter((img) => img._id !== id);
-      setImages(updatedImages);
-    } catch (error) {
-      console.error("Error deleting image:", error);
+const removeImage = async (id) => {
+  console.log("Deleting image with ID:", id);
+  
+  try {
+    await fetch(`https://meeyaladminbackend-production.up.railway.app/api/deletesingleimage/${id}`, {
+      method: "DELETE",
     }
-  };
+  );
+    const updatedImages = images.filter((img) => img._id !== id);
+    setImages(updatedImages);
+  } catch (error) {
+    console.error("Error deleting image:", error);
+  }
+};
 
   const handleCheck = () => {
     if (
