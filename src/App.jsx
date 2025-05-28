@@ -8,6 +8,7 @@ import Loader from "./pages/Loader";
 import AddProduct from "./pages/products/Addproduct";
 import Product from "./pages/products/Product";
 import Offers from "./pages/Offers/Offers";
+import Coupons from "./Coupons/Coupons";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -43,6 +44,7 @@ const App = () => {
                     <Route path="/add-product" element={<AddProduct />} />
                     <Route path="/products" element={<Product searchQuery={searchQuery} />} />
                     <Route path="/offers" element={<Offers />} />
+                    <Route path="/coupons" element={<Coupons />} />
                     <Route path="*" element={<Navigate to="/dashboard" />} />
                   </Routes>
                 </div>
