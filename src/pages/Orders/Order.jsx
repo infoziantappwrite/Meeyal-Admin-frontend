@@ -10,7 +10,7 @@ const PendingOrders = () => {
   useEffect(() => {
     const fetchPendingOrders = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/orders/pending');
+        const response = await axios.get('https://meeyaladminbackend-production.up.railway.app/api/orders/pending');
         const data = response.data;
 
         if (data && Array.isArray(data.orders)) {
@@ -49,7 +49,7 @@ const PendingOrders = () => {
   const handleStatusChange = async (orderId, newStatus) => {
     setUpdatingId(orderId);
     try {
-      const response = await axios.patch(`http://localhost:5000/api/orders/${orderId}/status`, {
+      const response = await axios.patch(`https://meeyaladminbackend-production.up.railway.app/api/orders/${orderId}/status`, {
         orderStatus: newStatus,
       });
 
