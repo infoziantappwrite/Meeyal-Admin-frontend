@@ -3,11 +3,10 @@ import axios from 'axios';
 
 const PendingOrders = () => {
   const [orders, setOrders] = useState([]);
-  console.log('orders', orders);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingId, setUpdatingId] = useState(null);
-  const [selectedOrder, setSelectedOrder] = useState(null); // for modal
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -18,11 +17,7 @@ const PendingOrders = () => {
     try {
       const response = await axios.get('https://meeyaladminbackend-production.up.railway.app/api/orders/pending');
       const data = response.data;
-      if (data && Array.isArray(data.orders)) {
-        setOrders(data.orders);
-      } else {
-        setOrders([]);
-      }
+      setOrders(Array.isArray(data.orders) ? data.orders : []);
     } catch (err) {
       console.error('Error fetching pending orders:', err);
       setError('Failed to load pending orders.');
@@ -179,7 +174,26 @@ const PendingOrders = () => {
             <p><strong>Status:</strong> {selectedOrder.orderStatus}</p>
             <p><strong>Date:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
 
+            {/* Address Section */}
             <div className="mt-4">
+              <h3 className="font-semibold mb-2">Address:</h3>
+              <div className="text-gray-700">
+                {selectedOrder.addressId ? (
+                  <>
+                    <p><strong>Name:</strong> {selectedOrder.addressId.name}</p>
+                    <p><strong>Phone:</strong> {selectedOrder.addressId.phone}</p>
+                    <p>{selectedOrder.addressId.address}</p>
+                    <p>{selectedOrder.addressId.city}, {selectedOrder.addressId.country}</p>
+                    <p>Postal Code: {selectedOrder.addressId.postalCode}</p>
+                  </>
+                ) : (
+                  <p>No address available</p>
+                )}
+              </div>
+            </div>
+
+            {/* Items */}
+            <div className="mt-6">
               <h3 className="font-semibold mb-2">Items:</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {selectedOrder.items?.map((item, index) => (
@@ -188,11 +202,7 @@ const PendingOrders = () => {
                     className="border p-3 rounded shadow-sm flex gap-4 items-center"
                   >
                     <img
-                      src={
-                        item.productId?.productImages?.[0]?.imageUrl ||
-                        'https://via.placeholder.com/100'
-                      }
-
+                      src={item.productId?.productImages?.[0]?.imageUrl || 'https://via.placeholder.com/100'}
                       alt="Product"
                       className="w-20 h-20 object-cover rounded"
                     />
