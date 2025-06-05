@@ -15,6 +15,8 @@ const EditProduct = ({ product, onClose }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [material, setMaterial] = useState(product?.material || "");
+
 
   const [images, setImages] = useState(
     product?.productImages?.map((img, index) => ({
@@ -24,48 +26,48 @@ const EditProduct = ({ product, onClose }) => {
   );
   const [uploading, setUploading] = useState(false);
 
- const handleImageUpload = async (e) => {
-  const files = Array.from(e.target.files);
-  const formData = new FormData();
-  files.forEach((file) => formData.append("productImages", file));
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    const formData = new FormData();
+    files.forEach((file) => formData.append("productImages", file));
 
-  setUploading(true);
-  try {
-    const res = await fetch(`https://meeyaladminbackend-production.up.railway.app/api/products/${product._id}`, {
-      method: "PUT",
-      body: formData,
-    });
+    setUploading(true);
+    try {
+      const res = await fetch(`https://meeyaladminbackend-production.up.railway.app/api/products/${product._id}`, {
+        method: "PUT",
+        body: formData,
+      });
 
-    if (!res.ok) throw new Error("Upload failed");
-    const data = await res.json();
-    // Update images state with the latest list of productImages
-    setImages(
-      data.productImages.map((img) => ({
-        _id: img._id,
-        imageUrl: img.imageUrl,
-      }))
-    );
-  } catch (error) {
-    console.error("Error uploading images:", error);
-  }
-  setUploading(false);
-};
-
-
-const removeImage = async (id) => {
-  console.log("Deleting image with ID:", id);
-  
-  try {
-    await fetch(`https://meeyaladminbackend-production.up.railway.app/api/deletesingleimage/${id}`, {
-      method: "DELETE",
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      // Update images state with the latest list of productImages
+      setImages(
+        data.productImages.map((img) => ({
+          _id: img._id,
+          imageUrl: img.imageUrl,
+        }))
+      );
+    } catch (error) {
+      console.error("Error uploading images:", error);
     }
-  );
-    const updatedImages = images.filter((img) => img._id !== id);
-    setImages(updatedImages);
-  } catch (error) {
-    console.error("Error deleting image:", error);
-  }
-};
+    setUploading(false);
+  };
+
+
+  const removeImage = async (id) => {
+    console.log("Deleting image with ID:", id);
+
+    try {
+      await fetch(`https://meeyaladminbackend-production.up.railway.app/api/deletesingleimage/${id}`, {
+        method: "DELETE",
+      }
+      );
+      const updatedImages = images.filter((img) => img._id !== id);
+      setImages(updatedImages);
+    } catch (error) {
+      console.error("Error deleting image:", error);
+    }
+  };
 
   const handleCheck = () => {
     if (
@@ -84,47 +86,48 @@ const removeImage = async (id) => {
     setShowConfirm(true);
   };
 
-const handleSave = async () => {
-  setUpdating(true);
-  setShowConfirm(false);
-  setErrorMessage("");
+  const handleSave = async () => {
+    setUpdating(true);
+    setShowConfirm(false);
+    setErrorMessage("");
 
-  try {
-    const formData = new FormData();
-    formData.append("productName", productName.trim());
-    formData.append("originalPrice", parseFloat(originalPrice));
-    formData.append("discountPrice", parseFloat(discountPrice) || 0);
-    formData.append("details", details.trim());
-    formData.append("stock", parseInt(stock, 10));
-    formData.append("category", category);
-    formData.append("subCategory", subcategory);
-    formData.append("status", status);
-    images.forEach((imgId) => formData.append("productImages", imgId._id)); // already uploaded images
+    try {
+      const formData = new FormData();
+      formData.append("productName", productName.trim());
+      formData.append("originalPrice", parseFloat(originalPrice));
+      formData.append("discountPrice", parseFloat(discountPrice) || 0);
+      formData.append("details", details.trim());
+      formData.append("stock", parseInt(stock, 10));
+      formData.append("category", category);
+      formData.append("subCategory", subcategory);
+      formData.append("status", status);
+      formData.append("material", material.trim());
+      images.forEach((imgId) => formData.append("productImages", imgId._id)); // already uploaded images
 
-    const response = await axios.put(
-      `https://meeyaladminbackend-production.up.railway.app/api/products/${product._id}`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      const response = await axios.put(
+        `https://meeyaladminbackend-production.up.railway.app/api/products/${product._id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 2500);
+      } else {
+        throw new Error("Update failed");
       }
-    );
-
-    if (response.status === 200) {
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2500);
-    } else {
-      throw new Error("Update failed");
+    } catch (error) {
+      console.error("Error updating product:", error);
+      setErrorMessage("❌ Failed to update product.");
+      setTimeout(() => setErrorMessage(""), 2000);
     }
-  } catch (error) {
-    console.error("Error updating product:", error);
-    setErrorMessage("❌ Failed to update product.");
-    setTimeout(() => setErrorMessage(""), 2000);
-  }
 
-  setUpdating(false);
-};
+    setUpdating(false);
+  };
 
 
   return (
@@ -192,6 +195,16 @@ const handleSave = async () => {
                   <option value="featured">Featured</option>
                   <option value="not_deliverable">Not Deliverable</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-gray-700 font-semibold mt-4 mb-1">Material</label>
+                <input
+                  type="text"
+                  className="border p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  value={material}
+                  onChange={(e) => setMaterial(e.target.value)}
+                  placeholder="e.g., Cotton, Steel"
+                />
               </div>
             </div>
 

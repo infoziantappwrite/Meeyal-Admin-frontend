@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { databases } from "../../lib/appwrite"; // Import Appwrite database service
+import axios from "axios";
+
+const CATEGORIES_API = "https://meeyaladminbackend-production.up.railway.app/api/categories";
+const SUBCATEGORIES_API = "https://meeyaladminbackend-production.up.railway.app/api/subcategories";
 
 const CategorySelector = ({ onCategoryChange, onSubcategoryChange, iscategory, issubcategory }) => {
     const [categories, setCategories] = useState([]);
     const [subcategories, setSubcategories] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState(iscategory?.$id || "");
-    const [selectedSubcategory, setSelectedSubcategory] = useState(issubcategory?.$id || "");
+    const [selectedCategory, setSelectedCategory] = useState(iscategory || "");
+    const [selectedSubcategory, setSelectedSubcategory] = useState(issubcategory || "");
     const [loadingCategories, setLoadingCategories] = useState(true);
     const [loadingSubcategories, setLoadingSubcategories] = useState(false);
 
+    // Fetch categories from backend
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await databases.listDocuments(
-                    import.meta.env.VITE_APPWRITE_DATABASE_ID,
-                    import.meta.env.VITE_APPWRITE_CATA_COLLECTION_ID
-                );
-                setCategories(response.documents);
+                const response = await axios.get(CATEGORIES_API);
+                setCategories(response.data);
             } catch (error) {
                 console.error("Error fetching categories:", error);
             } finally {
@@ -26,30 +27,21 @@ const CategorySelector = ({ onCategoryChange, onSubcategoryChange, iscategory, i
         fetchCategories();
     }, []);
 
+    // Fetch subcategories from backend by selected category ID
     const fetchSubcategories = async (categoryId) => {
         if (!categoryId) return;
-
         setLoadingSubcategories(true);
         try {
-            const res = await databases.listDocuments(
-                import.meta.env.VITE_APPWRITE_DATABASE_ID,
-                import.meta.env.VITE_APPWRITE_SUBCATA_COLLECTION_ID
-            );
-
-            // Only keep subcategories that belong to the selected category
-            const filteredSubcategories = res.documents.filter(
-                (sub) => sub.categories?.$id === categoryId
-            );
-
-            setSubcategories(filteredSubcategories);
-        } catch (err) {
-            console.error("Error fetching subcategories:", err);
+            const response = await axios.get(`${SUBCATEGORIES_API}/${categoryId}`);
+            setSubcategories(response.data);
+        } catch (error) {
+            console.error("Error fetching subcategories:", error);
         } finally {
             setLoadingSubcategories(false);
         }
     };
 
-    // Load subcategories if an existing category is provided (Editing case)
+    // If editing and category already selected
     useEffect(() => {
         if (selectedCategory) {
             fetchSubcategories(selectedCategory);
@@ -59,15 +51,15 @@ const CategorySelector = ({ onCategoryChange, onSubcategoryChange, iscategory, i
     const handleCategoryChange = (e) => {
         const categoryId = e.target.value;
         setSelectedCategory(categoryId);
-        setSelectedSubcategory(""); // Reset subcategory when category changes
-        onCategoryChange(categoryId); // Send to parent
+        setSelectedSubcategory("");
+        onCategoryChange(categoryId);
         fetchSubcategories(categoryId);
     };
 
     const handleSubcategoryChange = (e) => {
         const subcategoryId = e.target.value;
         setSelectedSubcategory(subcategoryId);
-        onSubcategoryChange(subcategoryId); // Send to parent
+        onSubcategoryChange(subcategoryId);
     };
 
     return (
@@ -80,13 +72,13 @@ const CategorySelector = ({ onCategoryChange, onSubcategoryChange, iscategory, i
                     onChange={handleCategoryChange}
                     className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
                     required
-                    disabled={loadingCategories || categories.length === 0}
+                    disabled={loadingCategories}
                 >
                     <option value="">
                         {loadingCategories ? "Loading categories..." : "Select Category"}
                     </option>
                     {categories.map((cat) => (
-                        <option key={cat.$id} value={cat.$id}>
+                        <option key={cat._id} value={cat._id}>
                             {cat.name}
                         </option>
                     ))}
@@ -94,28 +86,29 @@ const CategorySelector = ({ onCategoryChange, onSubcategoryChange, iscategory, i
             </div>
 
             {/* Subcategory Selection */}
-            
-                <div className="mt-8">
-                    <label className="block text-gray-700 font-semibold mb-1">Subcategory*</label>
-                    <select
-                        value={selectedSubcategory}
-                        onChange={handleSubcategoryChange}
-                        className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
-                        required
-                        disabled={loadingSubcategories}
-                    >
-                        <option value="">
-                            {loadingSubcategories
-                                ? "Loading..."
-                                : "Select Subcategory"}
+            <div className="mt-8">
+                <label className="block text-gray-700 font-semibold mb-1">Subcategory*</label>
+                <select
+                    value={selectedSubcategory}
+                    onChange={handleSubcategoryChange}
+                    className="w-full p-2 border rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    required
+                    disabled={loadingSubcategories || subcategories.length === 0}
+                >
+                    <option value="">
+                        {loadingSubcategories
+                            ? "Loading..."
+                            : subcategories.length === 0
+                            ? "No subcategories"
+                            : "Select Subcategory"}
+                    </option>
+                    {subcategories.map((sub) => (
+                        <option key={sub._id} value={sub._id}>
+                            {sub.name}
                         </option>
-                        {subcategories.map((sub) => (
-                            <option key={sub.$id} value={sub.$id}>
-                                {sub.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                    ))}
+                </select>
+            </div>
         </div>
     );
 };

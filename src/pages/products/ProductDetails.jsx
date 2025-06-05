@@ -56,6 +56,7 @@ const ProductDetails = ({ product, onClose }) => {
             <p><strong>Category:</strong> {product.category?.name || "NA"}</p>
             <p><strong>Status:</strong> {product.status ? product.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "NA"}</p>
             <p><strong>Subcategory:</strong> {product.subCategory?.name || "NA"}</p>
+             <p><strong>Material:</strong> {product.material || "NA"}</p> {/* ✅ Add this line */}
             <p><strong>Details:</strong> {product.details}</p>
             {product.createdAt && (
               <p><strong>Created At:</strong> {new Date(product.createdAt).toLocaleString()}</p>
