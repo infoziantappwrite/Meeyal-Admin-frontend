@@ -18,6 +18,8 @@ const AddProduct = () => {
   const [status, setStatus] = useState("");
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
+  const [material, setMaterial] = useState("");
+
 
   // Dropdown data
   const [categories, setCategories] = useState([]);
@@ -31,7 +33,7 @@ const AddProduct = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-   const CATEGORIES_API = "https://meeyaladminbackend-production.up.railway.app/api/categories";
+  const CATEGORIES_API = "https://meeyaladminbackend-production.up.railway.app/api/categories";
   const SUBCATEGORIES_API = "https://meeyaladminbackend-production.up.railway.app/api/subcategories";
   const PRODUCTS_API = "https://meeyaladminbackend-production.up.railway.app/api/products";
 
@@ -74,6 +76,8 @@ const AddProduct = () => {
       formData.append("category", category);
       formData.append("subCategory", subcategory);
       formData.append("status", status);
+      formData.append("material", material);
+
 
       // Append image files directly
       images.forEach((img, index) => {
@@ -243,6 +247,18 @@ const AddProduct = () => {
               className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-gray-800"
             />
           </div>
+
+          <div>
+            <label className="block font-semibold text-gray-700">Material</label>
+            <input
+              type="text"
+              value={material}
+              onChange={(e) => setMaterial(e.target.value)}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 text-gray-800"
+              placeholder="e.g., Cotton, Leather, Plastic"
+            />
+          </div>
+
 
           <div className="col-span-3">
             <label className="block font-semibold text-gray-700">Details*</label>

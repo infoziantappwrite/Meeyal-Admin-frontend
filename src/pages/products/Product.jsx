@@ -25,8 +25,8 @@ const Product = ({ searchQuery }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState([]);
-  
-  
+
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showViewProduct, setshowViewProduct] = useState(false);
@@ -156,7 +156,7 @@ const Product = ({ searchQuery }) => {
                   </td>
 
                   <td className="px-4 py-3">₹ {prod.originalPrice}</td>
-                    
+
                   <td className="px-4 py-3">{prod.category?.name || "NA"}</td>
 
                   <td className="px-4 py-3">{prod.subCategory?.name || "NA"}</td>
@@ -167,15 +167,15 @@ const Product = ({ searchQuery }) => {
                       <Edit />
                     </button>
 
-                   <button
-  className="text-green-500 hover:text-green-600"
-  onClick={() => {
-    setSelectedProduct(prod);
-    setshowViewProduct(true);
-  }}
->
-  <Eye />
-</button>
+                    <button
+                      className="text-green-500 hover:text-green-600"
+                      onClick={() => {
+                        setSelectedProduct(prod);
+                        setshowViewProduct(true);
+                      }}
+                    >
+                      <Eye />
+                    </button>
 
                   </td>
                 </tr>
